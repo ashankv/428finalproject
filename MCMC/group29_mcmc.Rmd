@@ -10,7 +10,6 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 
-###Markov Chain Monte Carlo
 Below is code from lecture/homework for Markov Chain Monte Carlo.
 ```{r normalmcmc}
 f <- function(x){1/pi/(1 + x^2)}          #The standard cauchy density
@@ -36,9 +35,6 @@ a <- seq(0.1,0.9,0.1)                     #Introducing the decile probabilities
 QR <- qcauchy(a)                          #deciles of standard cauchy
 Q <- quantile(y, a)                       #deciles of the generated sample
 
-hist(y, breaks="scott", main="", xlab="", freq=FALSE)
-lines(QR, f(QR))
-
 qqplot(QR, Q, main="", xlab="Cauchy Deciles", ylab="Sample Deciles", lwd=2)
 lines(x,x,xlim=c(-3.5,3.5), ylim=c(-3.5,3.5))
 ```
@@ -49,13 +45,13 @@ library(SimDesign)
 
 f <- function(x){1/pi/(1 + x^2)}
 
-Design <- data.frame(N = seq(1, 1))
+Design <- data.frame(N = c(10000))
   
 Generate <- function(condition, fixed_objects=FALSE) {
-  dat <- numeric(10000)
+  dat <- numeric(condition$N)
   dat[1] <- rnorm(1, 0, 2)
 
-  for (i in 2:10000) {
+  for (i in 2:condition$N) {
     u <- runif(1)
     xt <- dat[i-1]
     y <- rnorm(1, xt, 2)                    
@@ -70,9 +66,9 @@ Generate <- function(condition, fixed_objects=FALSE) {
 }
 
 Analyse <- function(condition, dat, fixed_objects=NULL) {
-  #a <- seq(0.1,0.9,0.1)
-  #Q <- quantile(dat[1001:10000], a)  
-  ret <- dat
+  a <- seq(0.1,0.9,0.1)
+  Q <- quantile(dat[ceiling(condition$N*.1):condition$N], a)  
+  ret <- Q
   ret
 }
 
@@ -90,3 +86,4 @@ QR <- qcauchy(a)                          #deciles of standard cauchy
 
 qqplot(QR, y, main="", xlab="Cauchy Deciles", ylab="Sample Deciles", lwd=2)
 lines(final,final,xlim=c(-3.5,3.5), ylim=c(-3.5,3.5))
+```

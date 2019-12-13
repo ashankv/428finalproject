@@ -9,7 +9,6 @@ output: pdf_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-###Permutation Test
 Below is code from lecture/homework for permutation test.
 ```{r normalperm}
 data("chickwts")
