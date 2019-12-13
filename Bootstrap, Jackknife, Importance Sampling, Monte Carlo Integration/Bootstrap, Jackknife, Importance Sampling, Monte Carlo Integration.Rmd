@@ -1,0 +1,305 @@
+---
+title: "Bootstrap & Jackknife"
+author: "Sahil Rangwala"
+date: "12/13/2019"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+##Code for Bootstrap Method
+
+```{r}
+
+#Data is the mean annual temperature in degrees Fahrenheit in New Haven, Connecticut, from 1912 to 1971.
+#The data is a test data that is offered within Rstudio, hard coded the data due to technical difficulties for others to download the test data 
+#Calculating the probability of if the chosen mean annual temperature is less than the median of the data set (51.2)
+#Should be around 50% probability, chose the median due to the fact that we know what the output should be 
+#This would help hone in on making sure the code is correct for both the SimDesign and non SimDesign methods
+
+  data = c(49.9,52.3,49.4,51.1,49.4,47.9,49.8,50.9,49.3,51.9,50.8,49.6,49.3,50.6,48.4,50.7,50.9,50.6,51.5,52.8,51.8,51.1,49.8,50.2,50.4,51.6,51.8,50.9,48.8,51.7,51.0,50.6,51.7,51.5,52.1,51.3,51.0,54.0,51.4,52.7,53.1,54.6,52.0,52.0,50.9,52.6,50.2,52.6,51.6,51.9,50.5,50.9,51.7,51.4,51.7,50.8,51.9,51.8,51.9,53.0)
+  print(median(data))
+  
+  thetahat=length(data[data < 51.2]) / length(data) # calculate the theta hat
+  B = 1000
+  bootRet = numeric(B) # vector that houses the bootstrap results
+  
+  #Resampling portion
+  for(b in 1:B) {
+    sampleData = sample(data,length(data),replace=TRUE) 
+    
+    #Seeing what samples are less than the median 
+    bootRet[b]= length(sampleData[sampleData < 51.2]) / length(sampleData) 
+  }
+  
+  #results of the bootstrap method
+  mean_bootstrap=mean(bootRet)
+  se_bootstrap=sd(bootRet)
+  bias_bootstrap=mean(bootRet - thetahat)
+
+
+print(mean_bootstrap)
+print(se_bootstrap)
+print(bias_bootstrap)
+
+#The data chosen
+plot(nhtemp, main = "nhtemp data",
+  ylab = "Mean annual temperature in New Haven, CT (deg. F)")
+
+```
+
+##Code for SimDesign Bootstrap Method
+
+```{r}
+
+library(SimDesign)
+
+data = c(49.9,52.3,49.4,51.1,49.4,47.9,49.8,50.9,49.3,51.9,50.8,49.6,49.3,50.6,48.4,50.7,50.9,50.6,51.5,52.8,51.8,51.1,49.8,50.2,50.4,51.6,51.8,50.9,48.8,51.7,51.0,50.6,51.7,51.5,52.1,51.3,51.0,54.0,51.4,52.7,53.1,54.6,52.0,52.0,50.9,52.6,50.2,52.6,51.6,51.9,50.5,50.9,51.7,51.4,51.7,50.8,51.9,51.8,51.9,53.0)
+
+
+thetaHat=length(data[data < 51.2]) / length(data) #Same method to calculate thetahat
+
+Design <- expand.grid(condition = c(1)) #Sample chosen is already intialized
+
+Generate <- function(condition, fixed_objects = NULL) {
+    dat <- data
+    return (dat)
+}
+
+ Analyse <- function(condition, dat, fixed_objects = NULL) {
+    sampleChosen <- sample(dat,length(dat),replace=TRUE) 
+    ret <- c(xmean = length(sampleChosen[sampleChosen < 51.2]) / length(sampleChosen)) # calculating the P(X < Median) of the sample
+    return (ret)
+}
+
+Summarise <- function(condition, results, fixed_objects = NULL) {
+    ret <- c(mean_Boot = mean(results[,1]), standardErrBoot = sd(results[,1]), biasBoot = mean(results[,1]-thetaHat))
+    return (ret)
+}
+
+simBootRes <- runSimulation(design=Design, replications=1000, generate=Generate, 
+                         analyse=Analyse, summarise=Summarise) # replicating the simulation 1000
+print(simBootRes) # the results of the SimDesign implementation 
+```
+
+```{r}
+data = c(49.9 ,52.3 ,49.4 ,51.1 ,49.4 ,47.9 ,49.8 ,50.9 ,49.3 ,51.9 ,50.8 ,49.6 ,49.3 ,50.6 ,48.4 ,50.7 ,50.9 ,50.6 ,51.5 ,52.8 ,51.8 ,51.1,49.8 ,50.2 ,50.4 ,51.6 ,51.8 ,50.9 ,48.8 ,51.7 ,51.0 ,50.6 ,51.7 ,51.5 ,52.1 ,51.3 ,51.0 ,54.0 ,51.4 ,52.7 ,53.1 ,54.6 ,52.0 ,52.0,50.9 ,52.6 ,50.2 ,52.6 ,51.6 ,51.9 ,50.5 ,50.9 ,51.7 ,51.4 ,51.7 ,50.8 ,51.9 ,51.8 ,51.9 ,53.0)
+```
+
+Used 
+http://philchalmers.github.io/SimDesign/html/11-Parametric-bootstrap.html
+to understand general structure
+
+##Code for Jackknife Method
+
+
+```{r}
+data = c(49.9,52.3,49.4,51.1,49.4,47.9,49.8,50.9,49.3,51.9,50.8,49.6,49.3,50.6,48.4,50.7,50.9,50.6,51.5,52.8,51.8,51.1,49.8,50.2,50.4,51.6,51.8,50.9,48.8,51.7,51.0,50.6,51.7,51.5,52.1,51.3,51.0,54.0,51.4,52.7,53.1,54.6,52.0,52.0,50.9,52.6,50.2,52.6,51.6,51.9,50.5,50.9,51.7,51.4,51.7,50.8,51.9,51.8,51.9,53.0)
+
+  thetaHat = length(data[data<51.2])/length(data) # calculation for theta hat
+  n = length(data)
+  
+  jackVal = numeric(n) # vector to save the results
+  for (i in 1:n) {
+    leftOut = data[-i] # leaving out the one specific data sample
+    
+    #Calculate the jackknife estimate for the specific sample
+    jackVal[i] = length(leftOut [leftOut < 51.2]) / length(leftOut) 
+  }
+  
+  #results of the Jackknife method
+  meanJack = mean(jackVal)
+  sumsq = sum((jackVal - mean(jackVal))^2)
+  standardErrorJack=sqrt((n - 1) / n) * sqrt(sumsq)
+  biasJack=(n - 1) * (mean(jackVal) - thetaHat)
+  
+  #return in a form of vector
+
+print(meanJack)
+print(standardErrorJack)
+print(biasJack)
+```
+
+##Code for SimDesign Jackknife Method
+
+```{r}
+library(SimDesign)
+
+data = c(49.9,52.3,49.4,51.1,49.4,47.9,49.8,50.9,49.3,51.9,50.8,49.6,49.3,50.6,48.4,50.7,50.9,50.6,51.5,52.8,51.8,51.1,49.8,50.2,50.4,51.6,51.8,50.9,48.8,51.7,51.0,50.6,51.7,51.5,52.1,51.3,51.0,54.0,51.4,52.7,53.1,54.6,52.0,52.0,50.9,52.6,50.2,52.6,51.6,51.9,50.5,50.9,51.7,51.4,51.7,50.8,51.9,51.8,51.9,53.0)
+
+Design <- expand.grid(condition = c(1)) # don't need design because the samples are initialized
+
+Generate <- function(condition, fixed_objects = NULL) {
+    dat <- data
+    dat
+}
+
+Analyse <- function(condition, dat, fixed_objects = NULL) {
+    thetahat = length(dat[dat < 51.2]) / length(dat) # calculate the theta hat
+    n = length(data)
+  
+    jackVal = numeric(n) # vector to save the results
+    for (i in 1:n) {
+      leftOut = data[-i] # leaving out the one specific data sample
+      
+      #Calculate the jackknife estimate for the specific sample
+      jackVal[i] = length(leftOut [leftOut < 51.2]) / length(leftOut) 
+    }
+  
+    #results of the Jackknife method
+    meanJack = mean(jackVal)
+    sumsq = sum((jackVal - mean(jackVal))^2)
+    standardErrorJack=sqrt((n - 1) / n) * sqrt(sumsq)
+    biasJack=(n - 1) * (mean(jackVal) - thetaHat)
+    
+    
+    
+    ret <- c(meanJackknife = meanJack, standardErrorJackknife = standardErrorJack, BiasJackknife = biasJack)
+    return(ret)
+}
+
+Summarise <- function(condition, results, fixed_objects = NULL) {
+    ret <- c(meanJackknife = mean(results[,1]), 
+             standardErrorJackknife = mean(results[,2]),
+             BiasJackknife = mean(results[,3]))
+    ret
+}
+
+SimdDesignResults <- runSimulation(design=Design, replications=1000, generate=Generate, 
+                         analyse=Analyse, summarise=Summarise) 
+print(SimdDesignResults) 
+
+```
+
+##Importance Sampling
+```{r}
+#initialize variables
+m <- 10000
+theta.hat <- se <- numeric(5)
+#create function to represent equation
+g <- function(x) {
+exp(-x - log(1+x^2)) * (x > 0) * (x < 1)
+}
+#generate random uniform variables
+u <- runif(m) 
+#Find importance function and calculate x
+x <- - log(1 - u * (1 - exp(-1)))
+#Find Ratio of functions
+fg <- g(x) / (exp(-x) / (1 - exp(-1)))
+#take mean of result
+theta.hat <- mean(fg)
+#calculate standard error
+se <- sd(fg)
+theta.hat
+se
+```
+##SimDesign Importance Sampling
+```{r}
+#Set Sample Size parameter for simulation design
+Design <- data.frame(sample_size = c(100, 1000, 10000))
+
+#Function used to generate data from uniform distribution
+Generate <- function(condition, fixed_objects = NULL) {
+    N <- condition$sample_size
+    dat <- runif(N)
+    dat
+}
+
+#Calculates Estimates
+Analyse <- function(condition, dat, fixed_objects = NULL) {
+    u <- dat
+    #Find importance function and calculate x
+    x <- - log(1 - u * (1 - exp(-1)))
+    #Find Ratio of functions
+    fg <- g(x) / (exp(-x) / (1 - exp(-1)))
+    #take mean of result
+    theta.hat <- mean(fg)
+    se <- sd(fg)
+    ret <- c(theta.hat = theta.hat,standardError=se)
+    ret
+}
+
+#Caculates mean of estimates and standard error
+Summarise <- function(condition, results, fixed_objects = NULL) {
+    se=sd(results)
+    ret <- c(theta.hat=mean((results[,1])), standardError = mean(results[,2]))
+    ret
+}
+
+#Simulation is run 1000 times
+results_sd <- runSimulation(design=Design, replications=1000, generate=Generate, 
+                         analyse=Analyse, summarise=Summarise)
+results_sd
+```
+
+
+##Monte Carlo Integration
+```{r}
+#function to generate monte carlo estimates
+ pimc=function(a,b){
+  m <- 10000
+  #generate uniform random variables
+  u <- runif(m,a,b)
+  #function from integral to be estimated
+  g=4*sqrt(1-u^2)
+  #find estimate using mean function and taking into account integral limits
+  theta.hat=mean(g)*(b-a)
+  se=sd(g)
+  return(c(theta.hat=theta.hat,sd=se))
+ }
+a=c(0,0,0)
+b=c(1,0.5,.25)
+theta.hat=numeric(3)
+se=numeric(3)
+for(i in 1:length(a)){
+  print(pimc(a[i],b[i]))
+}
+
+```
+
+##SimDesign Monte Carlo Integration
+```{r}
+#Set Parameters for simulation design
+Design <- data.frame(sample_size = c(10000, 10000, 10000), 
+                     a = c(0, 0, 0), 
+                     b = c(1, 0.5, 0.25))
+
+#Function used to generate data from uniform distribution with given parameters
+Generate <- function(condition, fixed_objects = NULL) {
+    N <- condition$sample_size
+    ll <- condition$a
+    ul <- condition$b
+    dat <- runif(N, ll, ul)
+    dat
+}
+
+#Calculates Estimates
+Analyse <- function(condition, dat, fixed_objects = NULL) {
+    u <- dat
+    #function from integral to be estimated
+    g=4*sqrt(1-u^2)
+    #find estimate using mean function and taking into account integral limits
+    theta.hat <- mean(g) * (condition$b-condition$a)
+    ret <- c(theta_hat = theta.hat,se=sd(g))
+    ret
+}
+
+#Caculates mean of estimates and standard error
+Summarise <- function(condition, results, fixed_objects = NULL) {
+    se = mean(results[,2])
+    ret <- c(theta.hat = mean(results[,1]),standardError= se)
+    ret
+}
+
+#Simulation is run 1000 times
+results_sd <- runSimulation(design=Design, replications=1000, generate=Generate, 
+                         analyse=Analyse, summarise=Summarise)
+results_sd
+```
+
