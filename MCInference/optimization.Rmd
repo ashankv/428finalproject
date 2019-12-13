@@ -1,0 +1,85 @@
+---
+title: "Optimization"
+output:
+  pdf_document: default
+  html_notebook: default
+---
+
+``` {r}
+# Example of MLE optimization using log-likelihood of Gamma distribution, found in "Optimization" Lecture slides
+LL=function(theta,x){
+    n=length(x)
+    sx=sum(x)
+    slogx=sum(log(x))
+    r=theta[1]
+    lambda=theta[2]
+    loglik=n*r*log(lambda)
+    loglik=loglik+(r-1)*slogx-lambda*sx
+    loglik=loglik-n*log(gamma(r))
+    return(-loglik)
+}
+
+r=5
+lambda=2
+x=rgamma(100,r,lambda)
+optim(c(1,1),LL,x=x)
+```
+
+``` {r}
+library(SimDesign)
+
+LL=function(theta,x){
+    n=length(x)
+    sx=sum(x)
+    slogx=sum(log(x))
+    r=theta[1]
+    lambda=theta[2]
+    loglik=n*r*log(lambda)
+    loglik=loglik+(r-1)*slogx-lambda*sx
+    loglik=loglik-n*log(gamma(r))
+    return(-loglik)
+}
+
+#### Step 1 --- Define your conditions under study and create design data.frame
+
+Design <- data.frame(N = c(100, 1000, 10000))
+
+#~~~~~~~~~~~~~~~~~~~~~~~~
+#### Step 2 --- Define generate, analyse, and summarise functions
+
+# help(Generate)
+Generate <- function(condition, fixed_objects = NULL){
+    lambda <- 2
+    r <- 5
+    x <- with(condition, rgamma(N, r, lambda)) # distributed N(10, 5)
+    dat <- data.frame('x'=x)
+    dat
+}
+
+# help(Analyse)
+Analyse <- function(condition, dat, fixed_objects = NULL){
+    x <- optim(c(1,1), LL, x=dat$x) # mean of the sample data vector
+    results <- data.frame('r'=mean(x$par[1]), 'lambda'=mean(x$par[2]))
+    results
+}
+
+# help(Summarise)
+Summarise <- function(condition, results, fixed_objects = NULL){
+    ret <- c(r=mean(results$r), r_sd=sd(results$r), lambda=mean(results$lambda), lambda_sd=sd(results$r)) # mean and SD summary of the sample means
+    ret
+}
+
+
+#~~~~~~~~~~~~~~~~~~~~~~~~
+#### Step 3 --- Collect results by looping over the rows in design
+
+# run the simulation
+Final <- runSimulation(design=Design, replications=1000,
+                       generate=Generate, analyse=Analyse, summarise=Summarise)
+Final
+
+# reproduce exact simulation
+Final_rep <- runSimulation(design=Design, replications=1000, seed=Final$SEED,
+                       generate=Generate, analyse=Analyse, summarise=Summarise)
+Final_rep
+```
