@@ -1,0 +1,57 @@
+---
+output:
+  pdf_document:
+    toc: yes
+  html_document:
+    theme: readable
+    toc: yes
+params:
+  solution: TRUE
+  release: FALSE
+---
+
+---------------------------------------
+
+## MC Inference: Estimating MSE for Median of Normal Distribution (Example 6.2 from the book)
+
+```{r, echo = TRUE, message = FALSE, warning = FALSE}
+library(SimDesign)
+
+# Example 6.2 from Book
+n = 20
+m = 1000
+tmean = numeric(m) 
+for (i in 1:m) {
+  x = sort(rnorm(n)) 
+  tmean[i] = median(x) 
+}
+
+mse = mean(tmean^2)
+
+# =====================
+# Using SimDesign:
+
+# Sources Consulted:
+# https://cran.r-project.org/web/packages/SimDesign/SimDesign.pdf
+# http://philchalmers.github.io/SimDesign/pres.pdf
+
+Design = data.frame(N = c(10, 20, 30, 40, 50, 60, 70))   # Different N values
+
+Generate = function(condition, fixed_objects=NULL) {
+  dat = sort(rnorm(condition$N))    # Preprocess data
+  dat
+}
+
+Analyse <- function(condition, dat, fixed_objects = NULL) {
+  ret = median(dat)    # Thetahat is the median of the data
+  ret
+}
+
+Summarise <- function(condition, results, fixed_objects = NULL) {
+  ret = c(MSE=mean(results^2), SE=sqrt(sum((results - mean(results))^2)) / 1000)
+  ret # Calculates MSE and SE using MC Inference
+}
+
+# Run runSimulation method from SimDesign
+runSimulation(design=Design, replications=1000, generate=Generate, analyse=Analyse, summarise=Summarise)
+```

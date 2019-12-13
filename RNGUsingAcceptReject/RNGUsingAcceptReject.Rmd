@@ -1,0 +1,49 @@
+---
+output:
+  pdf_document:
+    toc: yes
+  html_document:
+    theme: readable
+    toc: yes
+params:
+  solution: TRUE
+  release: FALSE
+---
+
+---------------------------------------
+
+## RNG using Accept/Reject (New)
+
+```{r setup, echo = TRUE, message = FALSE, warning = FALSE}
+library(SimDesign)
+
+# Sources Consulted: https://wiseodd.github.io/techblog/2015/10/21/rejection-sampling/
+
+# Graph the Proposal and Target Densities
+x = seq(-50, 150, .01)
+targetY = dnorm(x, 30, 10) + dnorm(x, 80, 20)
+proposalY = dnorm(x, 50, 30)
+
+# M = 4
+plot(x, 4*proposalY, col="red", type="l", main="Target: N(30, 10) + N(80, 20), Proposal: N(50, 30)", xlab="X Values", ylab="Y Values")
+lines(x, targetY, col="blue", lwd="5")
+
+legend(100, .03, legend=c("Target", "Proposal"), col=c("blue", "red"), lty=1)
+
+f = function(x) {
+  dnorm(x, 30, 10) + dnorm(x, 80, 20)     # Mixed Normal Desnity (Target)
+}
+
+g = function(x) {
+  dnorm(x, 50, 30)  # Normal Density (Proposal)
+}
+
+randG = function(n) {
+  rnorm(n, 50, 30)   # Random Generator of Proposal Density
+}
+
+# Run rejectionSampling method from SimDesign
+# M = 4 works because the proposal density envelopes the target density as shown in the graph
+s = rejectionSampling(100000, df = f, dg = g, rg = randG, M = 4)
+hist(s, main="Accept/Reject Samples of N(30, 10) + N(80, 20)", xlab="X Values")
+```
